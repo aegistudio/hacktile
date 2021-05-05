@@ -183,6 +183,19 @@ void mainPlaygroundView::repaintRangedField(
 	uint8_t low, uint8_t high) {
 	for(uint8_t i = low; i <= high; ++i)
 		term << cli::pos(26, 24-i) << "                    ";
+	if(high >= 19) term << cli::pos(25, 5) << 
+		cli::style::reset <<  "\xe2\x94\x8c"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x80" "\xe2\x94\x80"
+		"\xe2\x94\x90";
 	term << cli::pos(26, 24);
 	current.renderField(term, play.getField(), low, high);
 }
