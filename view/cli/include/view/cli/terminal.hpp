@@ -97,7 +97,21 @@ struct pos {
  * the update to the player screen.
  */
 class terminal {
-	int term; termios terminalMode;
+	struct term_initializer final {
+		termios terminalMode;
+		int term;
+		term_initializer(int term);
+		~term_initializer();
+	} initialized_term;
+	struct new_screen_setter final {
+		new_screen_setter(term_initializer &t);
+	} new_screen;
+	struct screen_cleaner final {
+		int term;
+		screen_cleaner(int term);
+		~screen_cleaner();
+	} cleaned_screen;
+	int term;
 	std::vector<char> buffer;
 	uint8_t foregroundColor, backgroundColor;
 	style currentStyle;
@@ -105,7 +119,6 @@ class terminal {
 	void appendStyleSequence();
 public:
 	terminal(int term);
-	~terminal();
 	terminal& operator<<(foreground);
 	terminal& operator<<(background);
 	terminal& operator<<(move);

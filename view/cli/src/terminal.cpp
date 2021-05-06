@@ -27,39 +27,40 @@ namespace cli {
 
 #define control "\033["
 
-terminal::terminal(int term): term(term), buffer(),
-	foregroundColor(color::white), backgroundColor(color::black),
-	currentStyle(style::reset),
-	styleUpdated(true), hasBackground(false) {
-
+terminal::term_initializer::term_initializer(int term):
+	term(term) {
 	// Retrieve the original flag of terminal, so that they
 	// could be recovered once the program has exit.
-	if(tcgetattr(1, &terminalMode) < 0) {
+	if(tcgetattr(term, &terminalMode) < 0) {
 		std::stringstream error;
 		error << "cannot fetch terminal attribute: "
 			<< strerror(errno);
 		throw std::runtime_error(error.str());
 	}
-	hacktile::util::defer terminalReset([&]() {
-		tcsetattr(term, TCSANOW, &terminalMode);
-	});
-
+}
+terminal::term_initializer::~term_initializer() {
+	// Reset the screen display mode.
+	tcsetattr(term, TCSANOW, &terminalMode);
+}
+terminal::new_screen_setter::new_screen_setter(term_initializer &t) {
 	// Attempt to copy and modify the console mode.
 	termios newTerminalMode;
-	memcpy(&newTerminalMode, &terminalMode, sizeof(termios));
+	memcpy(&newTerminalMode, &t.terminalMode, sizeof(termios));
 	newTerminalMode.c_iflag &= ~(
 		IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
 	newTerminalMode.c_oflag &= ~(OCRNL|XTABS);
 	newTerminalMode.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 	newTerminalMode.c_cc[VMIN] = 1;
 	newTerminalMode.c_cc[VTIME] = 0;
-	if(tcsetattr(term, TCSANOW, &newTerminalMode) < 0) {
+	if(tcsetattr(t.term, TCSANOW, &newTerminalMode) < 0) {
 		std::stringstream error;
 		error << "cannot initialize terminal: "
 			<< strerror(errno);
 		throw std::runtime_error(error.str());
 	}
+}
 
+terminal::screen_cleaner::screen_cleaner(int term): term(term) {
 	// Initialize the current screen for printing.
 	char initScreen[] = control "2J" control "0;0H" control "?25l";
 	size_t lenInitScreen = sizeof(initScreen);
@@ -69,19 +70,17 @@ terminal::terminal(int term): term(term), buffer(),
 			<< strerror(errno);
 		throw std::runtime_error(error.str());
 	}
-
-	// Initialization complete, release the defer functions.
-	terminalReset.release();
 }
-
-terminal::~terminal() {
+terminal::screen_cleaner::~screen_cleaner() {
 	// Clear screen data and reset the pointer.
 	char resetPointer[] = control "0;0H" control "?25h" control "2J";
 	write(term, resetPointer, sizeof(resetPointer));
-
-	// Reset the screen display mode.
-	tcsetattr(term, TCSANOW, &terminalMode);
 }
+
+terminal::terminal(int term):
+	initialized_term(term), new_screen(initialized_term), cleaned_screen(term),
+	term(term), foregroundColor(color::white), backgroundColor(color::black),
+	currentStyle(style::reset), styleUpdated(true), hasBackground(false) {}
 
 void terminal::appendStyleSequence() {
 	char buf[15];
