@@ -20,6 +20,13 @@
 #include <sstream>
 #include <cstring>
 #include <stdexcept>
+#include <functional>
+
+static void write_term(int term, const std::string &content, const std::function<std::string()> &error_message) {
+	if (write(term, content.data(), content.size()) != content.size()) {
+		throw std::runtime_error(error_message());
+	}
+}
 
 namespace hacktile {
 namespace view {
@@ -62,19 +69,15 @@ terminal::new_screen_setter::new_screen_setter(term_initializer &t) {
 
 terminal::screen_cleaner::screen_cleaner(int term): term(term) {
 	// Initialize the current screen for printing.
-	char initScreen[] = control "2J" control "0;0H" control "?25l";
-	size_t lenInitScreen = sizeof(initScreen);
-	if(write(term, initScreen, lenInitScreen) != lenInitScreen) {
-		std::stringstream error;
-		error << "cannot setup terminal screen: "
-			<< strerror(errno);
-		throw std::runtime_error(error.str());
-	}
+	write_term(term, control "2J" control "0;0H" control "?25l", []{
+		return std::string("cannot setup terminal screen: ") + strerror(errno);
+	});
 }
 terminal::screen_cleaner::~screen_cleaner() {
 	// Clear screen data and reset the pointer.
-	char resetPointer[] = control "0;0H" control "?25h" control "2J";
-	write(term, resetPointer, sizeof(resetPointer));
+	write_term(term, control "0;0H" control "?25h" control "2J", []{
+		return std::string("cannot reset screen pointer: ") + strerror(errno);
+	});
 }
 
 terminal::terminal(int term):
@@ -190,13 +193,10 @@ void terminal::append(const char* s, size_t length) {
 }
 
 void terminal::flush() {
-	if(write(term, buffer.data(), buffer.size()) != buffer.size()) {
-		std::stringstream error;
-		error << "cannot write to terminal: " << strerror(errno);
-		throw std::runtime_error(error.str());
-	} else {
-		buffer = std::vector<char>();
-	}
+	write_term(term, std::string{buffer.begin(), buffer.end()}, []{
+		return std::string("cannot write to terminal: ") + strerror(errno);
+	});
+	buffer.clear();
 }
 
 } // namespace hacktile::view::cli
