@@ -204,6 +204,7 @@ bool playground::swapTile() {
 	const tile* typ = current.getType();
 	const tile* previous = swap;
 	tileState location = current.getState();
+	tileState locationShadow = shadow.getState();
 	current = tilePathFinder();
 	shadow = tilePathFinder();
 	swap = typ;
@@ -211,8 +212,9 @@ bool playground::swapTile() {
 
 	// Dispatch the tile swap event at first.
 	tileSwapEvent swapEvent = {
-		.type     = *typ,
-		.location = location,
+		.type           = *typ,
+		.location       = location,
+		.locationShadow = locationShadow,
 	};
 	dispatch(&playgroundListener::tileSwap, swapEvent);
 

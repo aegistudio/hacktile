@@ -70,7 +70,7 @@ struct tileLockEvent {
  */
 struct tileSwapEvent {
 	const tile& type;
-	tileState location;
+	tileState location, locationShadow;
 };
 
 /**

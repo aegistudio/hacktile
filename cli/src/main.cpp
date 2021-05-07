@@ -68,8 +68,8 @@ public:
 	}
 
 	void tileSwap(const tileSwapEvent& event) {
-		// TODO: provide more information in swap event.
-		repaintField();
+		repaintTileField(event.type, event.location);
+		repaintTileField(event.type, event.locationShadow);
 		repaintPreview();
 		repaintSwap();
 	}
