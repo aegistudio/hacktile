@@ -27,23 +27,24 @@ namespace cli {
 
 #define control "\033["
 
-terminal::terminal(int term): term(term), buffer(),
-	foregroundColor(color::white), backgroundColor(color::black),
-	currentStyle(style::reset),
-	styleUpdated(true), hasBackground(false) {
-
+namespace details {
+initializedTerminal::initializedTerminal(int term):
+	term(term) {
 	// Retrieve the original flag of terminal, so that they
 	// could be recovered once the program has exit.
-	if(tcgetattr(1, &terminalMode) < 0) {
+	if(tcgetattr(term, &terminalMode) < 0) {
 		std::stringstream error;
 		error << "cannot fetch terminal attribute: "
 			<< strerror(errno);
 		throw std::runtime_error(error.str());
 	}
-	hacktile::util::defer terminalReset([&]() {
-		tcsetattr(term, TCSANOW, &terminalMode);
-	});
+}
+initializedTerminal::~initializedTerminal() {
+	// Reset the screen display mode.
+	tcsetattr(term, TCSANOW, &terminalMode);
+}
 
+newTerminal::newTerminal(int term): initializedTerminal(term) {
 	// Attempt to copy and modify the console mode.
 	termios newTerminalMode;
 	memcpy(&newTerminalMode, &terminalMode, sizeof(termios));
@@ -59,7 +60,9 @@ terminal::terminal(int term): term(term), buffer(),
 			<< strerror(errno);
 		throw std::runtime_error(error.str());
 	}
+}
 
+clearScreen::clearScreen(int term): newTerminal(term) {
 	// Initialize the current screen for printing.
 	char initScreen[] = control "2J" control "0;0H" control "?25l";
 	size_t lenInitScreen = sizeof(initScreen);
@@ -69,19 +72,17 @@ terminal::terminal(int term): term(term), buffer(),
 			<< strerror(errno);
 		throw std::runtime_error(error.str());
 	}
-
-	// Initialization complete, release the defer functions.
-	terminalReset.release();
 }
-
-terminal::~terminal() {
+clearScreen::~clearScreen() {
 	// Clear screen data and reset the pointer.
 	char resetPointer[] = control "0;0H" control "?25h" control "2J";
 	write(term, resetPointer, sizeof(resetPointer));
-
-	// Reset the screen display mode.
-	tcsetattr(term, TCSANOW, &terminalMode);
 }
+}
+
+terminal::terminal(int term): clearScreen(term),
+	foregroundColor(color::white), backgroundColor(color::black),
+	currentStyle(style::reset), styleUpdated(true), hasBackground(false) {}
 
 void terminal::appendStyleSequence() {
 	char buf[15];

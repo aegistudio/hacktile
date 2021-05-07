@@ -88,6 +88,22 @@ struct pos {
 	constexpr pos(int x, int y): x(x), y(y) {}
 };
 
+namespace details {
+struct initializedTerminal {
+	termios terminalMode;
+	int term;
+	initializedTerminal(int term);
+	~initializedTerminal();
+};
+struct newTerminal: initializedTerminal {
+	newTerminal(int term);
+};
+struct clearScreen: newTerminal {
+	clearScreen(int term);
+	~clearScreen();
+};
+}
+
 /**
  * @brief terminal provides interface for other instance
  * classes to manipulate the terminal.
@@ -96,8 +112,7 @@ struct pos {
  * current output style and location, and finally synchronize
  * the update to the player screen.
  */
-class terminal {
-	int term; termios terminalMode;
+class terminal: private details::clearScreen {
 	std::vector<char> buffer;
 	uint8_t foregroundColor, backgroundColor;
 	style currentStyle;
@@ -105,7 +120,6 @@ class terminal {
 	void appendStyleSequence();
 public:
 	terminal(int term);
-	~terminal();
 	terminal& operator<<(foreground);
 	terminal& operator<<(background);
 	terminal& operator<<(move);
