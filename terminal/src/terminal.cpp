@@ -20,6 +20,31 @@
 #include <sstream>
 #include <cstring>
 #include <stdexcept>
+#include <string>
+
+namespace {
+struct charSpan {
+	const char *content;
+	unsigned len;
+	charSpan(const char *content, const unsigned len):
+		content(content), len(len) {}
+	template <unsigned N>
+	charSpan(const char (&content)[N]): charSpan(content, N) {}
+};
+void onError(int return_code, const charSpan error_prefix) {
+	if (return_code < 0) {
+		std::string error_message{error_prefix.content, error_prefix.len};
+		error_message += strerror(errno);
+		throw std::runtime_error(std::move(error_message));
+	}
+}
+void write(int term, const charSpan content, const charSpan error_prefix) {
+	onError(
+		::write(term, content.content, content.len) != content.len ? -1 : 0,
+		error_prefix
+	);
+}
+}
 
 namespace hacktile {
 namespace terminal {
@@ -31,12 +56,8 @@ initializedTerminal::initializedTerminal(int term):
 	term(term) {
 	// Retrieve the original flag of terminal, so that they
 	// could be recovered once the program has exit.
-	if(tcgetattr(term, &terminalMode) < 0) {
-		std::stringstream error;
-		error << "cannot fetch terminal attribute: "
-			<< strerror(errno);
-		throw std::runtime_error(error.str());
-	}
+	onError(tcgetattr(term, &terminalMode),
+		"cannot fetch terminal attribute: ");
 }
 initializedTerminal::~initializedTerminal() {
 	// Reset the screen display mode.
@@ -53,29 +74,19 @@ newTerminal::newTerminal(int term): initializedTerminal(term) {
 	newTerminalMode.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 	newTerminalMode.c_cc[VMIN] = 1;
 	newTerminalMode.c_cc[VTIME] = 0;
-	if(tcsetattr(term, TCSANOW, &newTerminalMode) < 0) {
-		std::stringstream error;
-		error << "cannot initialize terminal: "
-			<< strerror(errno);
-		throw std::runtime_error(error.str());
-	}
+	onError(tcsetattr(term, TCSANOW, &newTerminalMode),
+		"cannot initialize terminal: ");
 }
 
 clearScreen::clearScreen(int term): newTerminal(term) {
 	// Initialize the current screen for printing.
-	char initScreen[] = control "2J" control "0;0H" control "?25l";
-	size_t lenInitScreen = sizeof(initScreen);
-	if(write(term, initScreen, lenInitScreen) != lenInitScreen) {
-		std::stringstream error;
-		error << "cannot setup terminal screen: "
-			<< strerror(errno);
-		throw std::runtime_error(error.str());
-	}
+	write(term, control "2J" control "0;0H" control "?25l",
+		"cannot setup terminal screen: ");
 }
 clearScreen::~clearScreen() {
 	// Clear screen data and reset the pointer.
-	char resetPointer[] = control "0;0H" control "?25h" control "2J";
-	write(term, resetPointer, sizeof(resetPointer));
+	write(term, control "0;0H" control "?25h" control "2J",
+		"cannot reset pointer: ");
 }
 }
 
@@ -191,13 +202,9 @@ void terminal::append(const char* s, size_t length) {
 }
 
 void terminal::flush() {
-	if(write(term, buffer.data(), buffer.size()) != buffer.size()) {
-		std::stringstream error;
-		error << "cannot write to terminal: " << strerror(errno);
-		throw std::runtime_error(error.str());
-	} else {
-		buffer = std::vector<char>();
-	}
+	write(term, charSpan{buffer.data(), buffer.size()},
+		"cannot write to terminal: ");
+	buffer = std::vector<char>();
 }
 
 } // namespace hacktile::terminal
