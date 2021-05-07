@@ -25,10 +25,10 @@
 namespace {
 struct charSpan {
 	const char *content;
-	unsigned len;
-	charSpan(const char *content, const unsigned len):
+	std::size_t len;
+	charSpan(const char *content, const std::size_t len):
 		content(content), len(len) {}
-	template <unsigned N>
+	template <std::size_t N>
 	charSpan(const char (&content)[N]): charSpan(content, N) {}
 };
 void onError(int return_code, const charSpan error_prefix) {
