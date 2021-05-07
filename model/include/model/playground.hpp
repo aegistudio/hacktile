@@ -24,7 +24,6 @@ namespace model {
 struct tileSpawnEvent {
 	const tile& type;
 	tileState location, locationShadow;
-	bool disableSwap;
 };
 
 /**
@@ -71,7 +70,7 @@ struct tileLockEvent {
  */
 struct tileSwapEvent {
 	const tile& type;
-	tileState location;
+	tileState location, locationShadow;
 };
 
 /**
