@@ -15,15 +15,14 @@
  * switch to libuv in the future.
  */
 #include "util/defer.hpp"
-#include "view/cli/terminal.hpp"
+#include "terminal/terminal.hpp"
 #include <unistd.h>
 #include <sstream>
 #include <cstring>
 #include <stdexcept>
 
 namespace hacktile {
-namespace view {
-namespace cli {
+namespace terminal {
 
 #define control "\033["
 
@@ -201,6 +200,5 @@ void terminal::flush() {
 	}
 }
 
-} // namespace hacktile::view::cli
-} // namespace hacktile::view
+} // namespace hacktile::terminal
 } // namespace hacktile

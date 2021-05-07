@@ -9,12 +9,13 @@
  * be refactored in the future, the implementtion will also
  * be changed in the future.
  */
-#include "view/cli/tile.hpp"
+#include "terminal/view/tile.hpp"
 using namespace hacktile::model;
+using namespace hacktile::terminal;
 
 namespace hacktile {
+namespace terminal {
 namespace view {
-namespace cli {
 
 terminal& fullTileRenderer::renderTile(terminal& output,
 	const tile& which, tileDirection dir, bool renderColor) {
@@ -107,6 +108,6 @@ terminal& miniTileRenderer::renderTile(terminal& output,
 	return output;
 }
 
-} // namespace hacktile::view::cli
-} // namespace hacktile::view
+} // namespace hacktile::terminal::view
+} // namespace hacktile::terminal
 } // namespace hacktile

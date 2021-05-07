@@ -10,12 +10,12 @@
  * rendering tile in the field and a semi tile renderer
  * for rendering tiles in half will also be provided.
  */
-#include "view/cli/terminal.hpp"
+#include "terminal/terminal.hpp"
 #include "model/tile.hpp"
 
 namespace hacktile {
+namespace terminal {
 namespace view {
-namespace cli {
 
 /**
  * @brief fullTileRenderer is for rendering a full
@@ -40,7 +40,8 @@ public:
 
 	/// renderTile will attempt to render a tile right at
 	/// specified location.
-	terminal& renderTile(terminal& output,
+	terminal& renderTile(
+		hacktile::terminal::terminal& output,
 		const hacktile::model::tile& which,
 		hacktile::model::tileDirection dir =
 			hacktile::model::enumTileDirection::initial,
@@ -48,7 +49,8 @@ public:
 
 	/// renderField will attempt to render a field starting
 	/// at cursor location in the unit of row ranges.
-	terminal& renderField(terminal& output,
+	terminal& renderField(
+		hacktile::terminal::terminal& output,
 		const hacktile::model::field& field,
 		uint8_t bottom = 0, uint8_t top = 20);
 }; // class hacktile::view::cli::fullTileRenderer.
@@ -71,7 +73,8 @@ public:
 
 	/// renderTile will attempt to render a tile right at
 	/// specified location.
-	terminal& renderTile(terminal& output,
+	terminal& renderTile(
+		hacktile::terminal::terminal& output,
 		const hacktile::model::tile& which,
 		hacktile::model::tileDirection dir =
 			hacktile::model::enumTileDirection::initial,

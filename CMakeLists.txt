@@ -8,9 +8,9 @@ set(CMAKE_CXX_STANDARD 11) # C++11 Required
 LIST(APPEND CMAKE_MODULE_PATH
 	"${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(HacktileTesting)
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Aggregate all CMake module components here.
 add_subdirectory(util)
 add_subdirectory(model)
-add_subdirectory(view/cli)
-add_subdirectory(cli)
+add_subdirectory(terminal)
