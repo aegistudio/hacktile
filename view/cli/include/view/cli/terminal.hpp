@@ -89,18 +89,18 @@ struct pos {
 };
 
 namespace details {
-struct initialized_terminal {
+struct initializedTerminal {
 	termios terminalMode;
 	int term;
-	initialized_terminal(int term);
-	~initialized_terminal();
+	initializedTerminal(int term);
+	~initializedTerminal();
 };
-struct new_terminal: initialized_terminal {
-	new_terminal(int term);
+struct newTerminal: initializedTerminal {
+	newTerminal(int term);
 };
-struct clear_screen: new_terminal {
-	clear_screen(int term);
-	~clear_screen();
+struct clearScreen: newTerminal {
+	clearScreen(int term);
+	~clearScreen();
 };
 }
 
@@ -112,7 +112,7 @@ struct clear_screen: new_terminal {
  * current output style and location, and finally synchronize
  * the update to the player screen.
  */
-class terminal: private details::clear_screen {
+class terminal: private details::clearScreen {
 	std::vector<char> buffer;
 	uint8_t foregroundColor, backgroundColor;
 	style currentStyle;
