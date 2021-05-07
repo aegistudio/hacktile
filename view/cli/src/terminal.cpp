@@ -27,7 +27,8 @@ namespace cli {
 
 #define control "\033["
 
-terminal::term_initializer::term_initializer(int term):
+namespace details {
+initialized_terminal::initialized_terminal(int term):
 	term(term) {
 	// Retrieve the original flag of terminal, so that they
 	// could be recovered once the program has exit.
@@ -38,21 +39,22 @@ terminal::term_initializer::term_initializer(int term):
 		throw std::runtime_error(error.str());
 	}
 }
-terminal::term_initializer::~term_initializer() {
+initialized_terminal::~initialized_terminal() {
 	// Reset the screen display mode.
 	tcsetattr(term, TCSANOW, &terminalMode);
 }
-terminal::new_screen_setter::new_screen_setter(term_initializer &t) {
+
+new_terminal::new_terminal(int term): initialized_terminal(term) {
 	// Attempt to copy and modify the console mode.
 	termios newTerminalMode;
-	memcpy(&newTerminalMode, &t.terminalMode, sizeof(termios));
+	memcpy(&newTerminalMode, &terminalMode, sizeof(termios));
 	newTerminalMode.c_iflag &= ~(
 		IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
 	newTerminalMode.c_oflag &= ~(OCRNL|XTABS);
 	newTerminalMode.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 	newTerminalMode.c_cc[VMIN] = 1;
 	newTerminalMode.c_cc[VTIME] = 0;
-	if(tcsetattr(t.term, TCSANOW, &newTerminalMode) < 0) {
+	if(tcsetattr(term, TCSANOW, &newTerminalMode) < 0) {
 		std::stringstream error;
 		error << "cannot initialize terminal: "
 			<< strerror(errno);
@@ -60,7 +62,7 @@ terminal::new_screen_setter::new_screen_setter(term_initializer &t) {
 	}
 }
 
-terminal::screen_cleaner::screen_cleaner(int term): term(term) {
+clear_screen::clear_screen(int term): new_terminal(term) {
 	// Initialize the current screen for printing.
 	char initScreen[] = control "2J" control "0;0H" control "?25l";
 	size_t lenInitScreen = sizeof(initScreen);
@@ -71,15 +73,15 @@ terminal::screen_cleaner::screen_cleaner(int term): term(term) {
 		throw std::runtime_error(error.str());
 	}
 }
-terminal::screen_cleaner::~screen_cleaner() {
+clear_screen::~clear_screen() {
 	// Clear screen data and reset the pointer.
 	char resetPointer[] = control "0;0H" control "?25h" control "2J";
 	write(term, resetPointer, sizeof(resetPointer));
 }
+}
 
-terminal::terminal(int term):
-	initialized_term(term), new_screen(initialized_term), cleaned_screen(term),
-	term(term), foregroundColor(color::white), backgroundColor(color::black),
+terminal::terminal(int term): clear_screen(term),
+	foregroundColor(color::white), backgroundColor(color::black),
 	currentStyle(style::reset), styleUpdated(true), hasBackground(false) {}
 
 void terminal::appendStyleSequence() {
