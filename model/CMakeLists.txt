@@ -2,8 +2,6 @@
 # HackTile Model Module
 
 # Specify hackTileModel.a|lib static library build instruction.
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-include_directories("${CMAKE_SOURCE_DIR}/util/include")
 add_library(hacktileModel STATIC
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/tile.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/tetromino.cpp"

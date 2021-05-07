@@ -17,8 +17,7 @@
 #include <termios.h>
 
 namespace hacktile {
-namespace view {
-namespace cli {
+namespace terminal {
 
 /**
  * @brief color specifies the native form of console
@@ -149,6 +148,5 @@ public:
 	void flush();
 };
 
-} // namespace hacktile::view::cli
-} // namespace hacktile::view
+} // namespace hacktile::terminal
 } // namespace hacktile
