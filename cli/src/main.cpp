@@ -240,8 +240,8 @@ int main(int argc, char** argv) {
 	// data in tile, not type of tile itself.
 	uint8_t paletteColor[8];
 	paletteColor[0] = 0;
-	paletteColor[int(tetromino::J)] = cli::color::yellow;
-	paletteColor[int(tetromino::L)] = cli::color::blue;
+	paletteColor[int(tetromino::J)] = cli::color::blue;
+	paletteColor[int(tetromino::L)] = cli::color::yellow;
 	paletteColor[int(tetromino::S)] = cli::color::green;
 	paletteColor[int(tetromino::Z)] = cli::color::red;
 	paletteColor[int(tetromino::T)] = cli::color::magenta;

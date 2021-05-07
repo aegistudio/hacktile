@@ -14,7 +14,7 @@ namespace hacktile {
 namespace model {
 
 playground::playground(tileGenerator* generator, int numPreviews):
-	f(), generator(generator), swap(nullptr), swapEnabled(false),
+	f(), generator(generator), swap(nullptr), swapEnabled(true),
 	current(), shadow(), preview(new const tile*[numPreviews]),
 	numPreviews(numPreviews), previewCursor(0),
 	state(playgroundState::notStarted) {
@@ -72,7 +72,6 @@ void playground::spawnTile(const tile* typ) {
 			.type           = *current.getType(),
 			.location       = current.getState(),
 			.locationShadow = shadow.getState(),
-			.disableSwap    = false,
 		};
 		dispatch(&playgroundListener::tileSpawn, spawnEvent);
 
@@ -90,15 +89,12 @@ void playground::spawnTile(const tile* typ) {
 	if(f.drop(current, 20, newShadow)) {
 		std::swap(shadow, newShadow);
 	}
-	// TODO: make this a separated model from playgroud.
-	swapEnabled = true;
 
 	// Notify the subscribers about the tile spawn.
 	tileSpawnEvent spawnEvent = {
 		.type           = *current.getType(),
 		.location       = current.getState(),
 		.locationShadow = shadow.getState(),
-		.disableSwap    = false,
 	};
 	dispatch(&playgroundListener::tileSpawn, spawnEvent);
 	return;
@@ -184,6 +180,7 @@ bool playground::hardDrop() {
 	f.lock(current, clear);
 	current = tilePathFinder();
 	shadow = tilePathFinder();
+	swapEnabled = true;
 
 	// Dispatch the tile lock and clear event.
 	tileLockEvent afterEvent = {
@@ -222,10 +219,7 @@ bool playground::swapTile() {
 	// Spawn the previous tile or next tile.
 	if(previous == nullptr)
 		spawnNextTile();
-	else {
-		spawnTile(previous);
-		swapEnabled = false;
-	}
+	else spawnTile(previous);
 	return true;
 }
 
