@@ -140,7 +140,7 @@ public:
 	
 	// Delegated method of appending a fix-sized string.
 	template<size_t length>
-	terminal& operator<<(const char s[length]) {
+	terminal& operator<<(const char (&s)[length]) {
 		append(s, length);
 		return *this;
 	}
