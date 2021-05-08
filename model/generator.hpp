@@ -12,6 +12,7 @@
  */
 #include "model/tile.hpp"
 #include <memory>
+#include <deque>
 
 namespace hacktile {
 namespace model {
@@ -55,6 +56,52 @@ public:
 
 	/// generate method implementation of permutator.
 	virtual const tile* generate();
+};
+
+/**
+ * @brief historyRoll is a tile generator that will randomly pick a piece
+ * and try keeping the new piece different from the older ones.
+ * 
+ * It will remember `historySize` pieces, and retry `retryTimes` times before
+ * it gives up and just generate a piece ignoring the history.
+ * 
+ * XXX: Consider tile sequence `A A B` where `A`s are the same pointer;
+ * what should we do if we randomly pick `A1` but there is an `A2` in history?
+ * Currently we think `A1` and `A2` are different, but if we change `history`
+ * into `tiles *`, `A1` and `A2` will be treated as the same pieces.
+ */
+class historyRoll: public tileGenerator {
+	std::deque<std::size_t> history;
+	std::unique_ptr<std::size_t[]> counts;
+	// TODO: in fact only a readable *constant* copy of tiles is needed,
+	// so if we can make sure `tiles` will outlive this `class`,
+	// we should make it a pointer and avoid hard copying pointers.
+	std::unique_ptr<const tile*[]> tiles;
+	std::size_t numTiles;
+	const std::size_t retryTimes, historySize;
+	char workData[5000];
+public:
+	/**
+	 * @brief Construct a new history Roll object
+	 * 
+	 * @param tiles_ tiles to choose from
+	 * @param numTiles size of tiles
+	 * @param retryTimes how many times it should roll before giving up
+	 * @param initialHistory indices of tiles in previous history,
+	 * from oldest to newest.  For example, if `tiles` are `A B`,
+	 * a history of `0 1 1` means previous history are `A A B`.
+	 * Out-of-index history will not match any newly-generated tile.
+	 * @param historySize size of history
+	 * @param seed seed for the random number generator
+	 */
+	historyRoll(
+		const tile* tiles_[], std::size_t numTiles,
+		std::size_t retryTimes, std::size_t* initialHistory,
+		std::size_t historySize, uint64_t seed);
+
+	~historyRoll() override;
+
+	const tile* generate() override;
 };
 
 } // namespace hacktile::model
