@@ -53,5 +53,40 @@ const tile* tilePermutator::generate() {
 	return result;
 }
 
+historyRoll::historyRoll(
+	const tile* tiles_[], std::size_t numTiles,
+	std::size_t retryTimes, std::size_t* initialHistory,
+	std::size_t historySize, uint64_t seed):
+	history(initialHistory, initialHistory + historySize),
+	counts(new std::size_t[numTiles]),
+	tiles(new const tile*[numTiles]), numTiles(numTiles),
+	retryTimes(retryTimes), historySize(historySize) {
+	std::copy(tiles_, tiles_ + numTiles, tiles.get());
+	std::fill_n(counts.get(), numTiles, 0);
+	for (std::size_t i : history)
+		if (i < numTiles)
+			counts[i]++;
+	static_assert(sizeof(randomizer) <= sizeof(workData),
+		"not enough space to hold the random generator");
+	new (workData) randomizer(seed);
+}
+
+historyRoll::~historyRoll() {
+	reinterpret_cast<randomizer*>(workData)->~randomizer();
+}
+
+const tile* historyRoll::generate() {
+	std::uniform_int_distribution<std::size_t> sampler{0, numTiles - 1};
+	std::size_t result = sampler(*reinterpret_cast<randomizer*>(workData));
+	for (std::size_t i = 0; i < retryTimes && counts[result] > 0; ++i)
+		result = sampler(*reinterpret_cast<randomizer*>(workData));
+	history.push_back(result);
+	counts[result]++;
+	if (history.front() < numTiles)
+		counts[history.front()]--;
+	history.pop_front();
+	return tiles[result];
+}
+
 } // namespace hacktile::model
 } // namespace hacktile
